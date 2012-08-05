@@ -3,6 +3,7 @@ import pickle
 
 from .backends import LocalBackend, MemcacheBackend
 from .utils import default_cache_key_func
+from .batcher import Batcher
 
 class Cacher(object):
 
@@ -69,8 +70,12 @@ class Cacher(object):
                        backend=None, default_expires=None, 
                        cache_key_func=default_cache_key_func):
         
-        self.backend = backend or MemcacheBackend()
         self.cache_key_func = cache_key_func 
+
+        if backend:
+            self.backend = backend
+        else:
+            self.backend = MemcacheBackend(host=host, port=port)
         
     def cache(self, expires=None):
         """Decorates a function to be cacheable.
@@ -92,6 +97,9 @@ class Cacher(object):
 
         return decorator
 
+    def create_batcher(self):
+        """Simply creates a Batcher instance."""
+        return Batcher(self.backend)
 
 class CachedFunctionDecorator(object):
     

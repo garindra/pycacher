@@ -28,3 +28,6 @@ class Batcher(object):
 
     def batch(self):
         return self.backend.multi_get(self._keys)
+
+    def get_keys(self):
+        return self._keys

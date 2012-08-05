@@ -2,3 +2,14 @@ cacher
 ======
 
 Python module for easy function caching decoration, batching, and many more.
+
+Example Usage:
+-------------
+    
+    from pycacher import Cacher
+
+    cacher = Cacher('localhost', 11211)
+
+    @cacher.cache() 
+    def expensive_function(a, b):
+        return a + b

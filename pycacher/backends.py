@@ -17,7 +17,6 @@ class Backend(object):
     def set(self, key, value):
         raise NotImplementedError("Backend subclasses should always implement `set` method")
 
-
 class LocalBackend(object):
 
     def __init__(self):
@@ -41,7 +40,7 @@ class LocalBackend(object):
         values = {}
 
         for key in keys:
-            values[key] = self._dict[key]
+            values[key] = self._dict.get(key)
 
         return values
 
