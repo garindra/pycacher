@@ -2,6 +2,7 @@ import unittest
 
 import pycacher
 from pycacher.backends import LocalBackend
+from pycacher.batcher import OutOfBatcherContextRegistrationException
 
 class BatcherTestCase(unittest.TestCase):
     
@@ -86,3 +87,7 @@ class BatcherTestCase(unittest.TestCase):
         cache_key_2 = self.cached_function.build_cache_key(1, 3)
         
         self.assertEqual(self.batcher.get_keys(), [cache_key, cache_key_2])
+    
+    def test_should_raise_out_of_context_exception(self):
+        self.assertRaises(OutOfBatcherContextRegistrationException,
+                          self.cached_function.register, 1, 2)

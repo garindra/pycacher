@@ -71,7 +71,6 @@ class Batcher(object):
         return self._last_batched_values
 
     def register(self, decorated_func, *args):
-
         cache_key = decorated_func.build_cache_key(*args)
 
         self.add(cache_key)
@@ -81,6 +80,9 @@ class Batcher(object):
 
     def get_keys(self):
         return self._keys
+
+    def get(self, key):
+        return self._last_batched_values.get(key)
 
     def __enter__(self):
         """ On context manager enter step, we're basically pushing this Batcher instance

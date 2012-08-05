@@ -106,7 +106,11 @@ class Cacher(object):
         self._batcher_ctx_stack.append(batcher)
 
     def get_current_batcher(self):
-        return self._batcher_ctx_stack[-1]
+
+        if len(self._batcher_ctx_stack) > 0:
+            return self._batcher_ctx_stack[-1]
+        else:
+            return None
 
     def pop_batcher(self):
         return self._batcher_ctx_stack.pop()
@@ -126,7 +130,12 @@ class CachedFunctionDecorator(object):
 
         cache_key = self._build_cache_key(*args)
         
-        unpickled_value = self.cacher.backend.get(cache_key)
+        batcher = self.cacher.get_current_batcher()
+
+        if batcher:
+            unpickled_value = batcher.get(cache_key) or self.cacher.backend.get(cache_key)
+        else:
+            unpickled_value = self.cacher.backend.get(cache_key)
 
         if unpickled_value:
             return pickle.loads(unpickled_value)
