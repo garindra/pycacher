@@ -1,4 +1,7 @@
 from functools import wraps
+import pickle
+
+from .backends import MemcacheBackend
 
 class Cacher(object):
 
@@ -43,7 +46,7 @@ class Cacher(object):
 
     """
     def __init__(self, host='localhost', port=11211, client=None,
-                       backend='memcached', default_expires=None, 
+                       backend=MemcacheBackend, default_expires=None, 
                        cache_key_func=None):
         pass
         
@@ -57,15 +60,54 @@ class Cacher(object):
             pass
 
         """
+
         def decorator(f):
             #Wraps the function within a function decorator
             return CachedFunctionDecorator(f)
+
         return decorator
+
+def default_cache_key_func(func, *args):
+    """The default cache key function."""
+    return func.__module__ + '.' + func.__name__ + ':'.join([str(arg) for arg in args])
 
 class CachedFunctionDecorator(object):
     
-    def __init__(self, func):
+    def __init__(self, func, backend=None):
         self.func = func
+        self.backend = backend or MemcacheBackend()
+        self.cache_key_func = default_cache_key_func
 
     def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+        """The method that will actually be called when the decorated functon
+        is called.
+        """
+        cache_key = self._build_cache_key(*args)
+        
+        unpickled_value = self.backend.get(cache_key)
+
+        if unpickled_value:
+            return pickle.loads(unpickled_value)
+        else:
+            value = self.func(*args)
+            self.backend.set(cache_key, pickle.dumps(value))
+            return value
+
+    def _build_cache_key(self, *args):
+        """
+            Builds the cache key with the supplied cache_key function
+        """
+        return self.cache_key_func(self.func, *args)
+
+    def warm(self, *args):
+        """
+
+            Forces to run the actual function (regardless of whether we already
+            have the result on the cache or not) and set the backend to store
+            the return value.
+
+        """
+        cache_key = self._build_cache_key(*args)
+
+        value = self.func(*args)
+        return self.backend.set(cache_key, pickle.dumps(value))

@@ -1,3 +1,5 @@
 mock==1.0b1
 nose==1.1.2
+-e git+https://github.com/garindra/pycacher@f314b421b12353edc914f08dd9bc34b9134ca612#egg=pycacher-dev
+python-memcached==1.48
 wsgiref==0.1.2
