@@ -11,7 +11,7 @@ from pycacher.cacher import Cacher, CachedFunctionDecorator
 class CachedDecoratorClassTestCase(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.cacher = Cacher(backend=LocalBackend())
 
     def create_mock(self, *args, **kwargs):
         mock = Mock(*args, **kwargs)
@@ -21,14 +21,14 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
 
     def test_still_callable(self):
         func = self.create_mock()
-        decorated_func = CachedFunctionDecorator(func)
+        decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 
         assert callable(decorated_func)
 
     def test_returning_correct_value(self):
 
         func = self.create_mock(return_value='some_retval')
-        decorated_func = CachedFunctionDecorator(func)
+        decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 
         decorated_func.warm()
 
@@ -36,7 +36,7 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
 
     def test_decorated_function_should_only_be_called_once(self):
         func = self.create_mock(return_value='testing')
-        decorated_func = CachedFunctionDecorator(func)
+        decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 
         decorated_func(1)
         decorated_func(1)
@@ -45,7 +45,7 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
 
     def test_invalidate(self):
         func = self.create_mock(return_value='testing')
-        decorated_func = CachedFunctionDecorator(func)
+        decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 
         decorated_func(1)
 
@@ -57,7 +57,7 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
 
     def test_decorated_function_should_only_be_called_multiple_times_if_args_are_different(self):
         func = self.create_mock(return_value='testing')
-        decorated_func = CachedFunctionDecorator(func)
+        decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 
         decorated_func(1)
         decorated_func(2)

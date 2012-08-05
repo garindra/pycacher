@@ -13,3 +13,9 @@ Example Usage:
     @cacher.cache() 
     def expensive_function(a, b):
         return a + b
+
+TODO : 
+
+- add prefix
+- decorated function call within a batcher ctx manager should look for values
+  inside the batcher first.

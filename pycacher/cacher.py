@@ -3,7 +3,7 @@ import pickle
 
 from .backends import LocalBackend, MemcacheBackend
 from .utils import default_cache_key_func
-from .batcher import Batcher
+from .batcher import Batcher, OutOfBatcherContextRegistrationException
 
 class Cacher(object):
 
@@ -77,6 +77,8 @@ class Cacher(object):
         else:
             self.backend = MemcacheBackend(host=host, port=port)
         
+        self._batcher_ctx_stack = []
+
     def cache(self, expires=None):
         """Decorates a function to be cacheable.
 
@@ -91,23 +93,30 @@ class Cacher(object):
         def decorator(f):
 
             #Wraps the function within a function decorator
-            return CachedFunctionDecorator(f, backend=self.backend, 
-                                              expires=expires, 
+            return CachedFunctionDecorator(f, cacher=self, expires=expires, 
                                               cache_key_func=self.cache_key_func)
 
         return decorator
 
     def create_batcher(self):
         """Simply creates a Batcher instance."""
-        return Batcher(self.backend)
+        return Batcher(self)
+    
+    def push_batcher(self, batcher):
+        self._batcher_ctx_stack.append(batcher)
+
+    def get_current_batcher(self):
+        return self._batcher_ctx_stack[-1]
+
+    def pop_batcher(self):
+        return self._batcher_ctx_stack.pop()
 
 class CachedFunctionDecorator(object):
     
-    def __init__(self, func, backend=None, expires=None, 
+    def __init__(self, func, cacher=None, expires=None, 
                         cache_key_func=default_cache_key_func):
         self.func = func
-        self.backend = backend or LocalBackend()
-
+        self.cacher = cacher
         self.cache_key_func = cache_key_func
         self.expires = expires
 
@@ -117,18 +126,20 @@ class CachedFunctionDecorator(object):
 
         cache_key = self._build_cache_key(*args)
         
-        unpickled_value = self.backend.get(cache_key)
-        
-        print self.backend
+        unpickled_value = self.cacher.backend.get(cache_key)
 
         if unpickled_value:
             return pickle.loads(unpickled_value)
         else:
             value = self.func(*args)
-            self.backend.set(cache_key, pickle.dumps(value))
+            self.cacher.backend.set(cache_key, pickle.dumps(value))
             return value
 
     def _build_cache_key(self, *args):
+        """Builds the cache key with the supplied cache_key function """
+        return self.cache_key_func(self.func, *args)
+
+    def build_cache_key(self, *args):
         """Builds the cache key with the supplied cache_key function """
         return self.cache_key_func(self.func, *args)
 
@@ -143,7 +154,7 @@ class CachedFunctionDecorator(object):
         cache_key = self._build_cache_key(*args)
 
         value = self.func(*args)
-        return self.backend.set(cache_key, pickle.dumps(value))
+        return self.cacher.backend.set(cache_key, pickle.dumps(value))
 
     def is_cached(self, *args):
         """
@@ -152,7 +163,7 @@ class CachedFunctionDecorator(object):
         """
         cache_key = self._build_cache_key(*args)
 
-        return self.backend.exists(cache_key)
+        return self.cacher.backend.exists(cache_key)
 
     def invalidate(self, *args):
         """Invalidates the current function's cache key with the current args.
@@ -162,4 +173,28 @@ class CachedFunctionDecorator(object):
             is_user_board_subscriber.invalidate(uid, bid) 
 
         """
-        return self.backend.delete(self._build_cache_key(*args))
+        return self.cacher.backend.delete(self._build_cache_key(*args))
+
+    def register(self, *args):
+        """Registers the cached function on an active batcher context for later batching.
+            
+            Example usage;
+
+                batcher = cacher.create_batcher()
+
+                with batcher:
+                    cached_function.register(1, 2)
+
+                batcher.batch()
+
+                with batcher:
+                    cached_function(1, 2) #now will look for its value in the current batcher's
+                                          #last batched values.
+        """
+        batcher = self.cacher.get_current_batcher()
+
+        if batcher:
+            #Register the function and the args to the batcher 
+            batcher.register(self, *args)
+        else:
+            raise OutOfBatcherContextRegistrationException()
