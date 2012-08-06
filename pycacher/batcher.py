@@ -54,6 +54,8 @@ class Batcher(object):
         self._keys = []
         self._last_batched_values = {}
 
+        self._autobatch_flag = False
+
     def add(self, key):
 
         if isinstance(key, list):
@@ -84,6 +86,43 @@ class Batcher(object):
     def get(self, key):
         return self._last_batched_values.get(key)
 
+    def is_batched(self, key):
+        """Checks whether a key is included in the latest batch.
+        
+            Example:
+
+            self.batcher.add('test-1')
+
+            self.batcher.batch()
+
+            self.batcher.is_batched('test-1')
+            >> True
+
+        """
+        return key in self._last_batched_values
+
+    def autobatch(self):
+
+        """ autobatch enables the batcher to automatically batch the batcher keys
+        in the end of the context manager call.
+            
+            Example Usage:
+
+                with batcher.autobatch():
+                    expensive_function.register(1, 2)
+
+            is similar to:
+
+                with batcher:
+                    expensive_function.register(1, 2)
+
+                batcher.batch()
+                
+        """
+
+        self._autobatch_flag = True
+        return self
+
     def __enter__(self):
         """ On context manager enter step, we're basically pushing this Batcher instance
         to the parent cacher's batcher context, so when the there are decorated
@@ -92,6 +131,10 @@ class Batcher(object):
 
     def __exit__(self, type, value, traceback):
         """ On exit, pop the batcher. """
+
+        if self._autobatch_flag:
+            self.batch()
+            self._autobatch_flag = False
         self.cacher.pop_batcher()
 
 class OutOfBatcherContextRegistrationException(Exception):

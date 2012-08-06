@@ -1,5 +1,4 @@
 import unittest
-
 import pycacher
 from pycacher.backends import LocalBackend
 from pycacher.batcher import OutOfBatcherContextRegistrationException
@@ -15,6 +14,12 @@ class BatcherTestCase(unittest.TestCase):
             return a + b
 
         self.cached_function = cached_function
+
+    def create_mock(self, *args, **kwargs):
+        mock = Mock(*args, **kwargs)
+        mock.__name__ = str(random.random() * 10)
+
+        return mock
 
     def test_get_keys(self):
         
@@ -86,8 +91,41 @@ class BatcherTestCase(unittest.TestCase):
         cache_key = self.cached_function.build_cache_key(1, 2)
         cache_key_2 = self.cached_function.build_cache_key(1, 3)
         
-        self.assertEqual(self.batcher.get_keys(), [cache_key, cache_key_2])
-    
+        #self.assertEqual(self.batcher.get_keys(), [cache_key, cache_key_2])
+
+        self.assertFalse(self.batcher.is_batched(cache_key))
+        
+        self.batcher.batch()
+
+        self.assertTrue(self.batcher.is_batched(cache_key))
+
+    def test_context_manager_batch(self):
+        with self.batcher:
+            self.cached_function.register(1, 2)
+            self.cached_function.register(1, 3)
+        
+        cache_key = self.cached_function.build_cache_key(1, 2)
+        cache_key_2 = self.cached_function.build_cache_key(1, 3)
+        
+        #Run the actual batching.
+        self.batcher.batch()
+
+        with self.batcher:
+            #TODO : test if the cached function actually returns the value from the batcher
+            #instead of actually executing
+            assert self.cached_function(1, 2) == 3
+            assert self.cached_function(1, 3) == 4
+
+    def test_context_manager_autobatch(self):
+        
+        with self.batcher.autobatch():
+            self.cached_function.register(1, 2)
+            self.cached_function.register(1, 3)
+        
+        cache_key = self.cached_function.build_cache_key(1, 2)
+
+        self.assertTrue(self.batcher.is_batched(cache_key))
+        
     def test_should_raise_out_of_context_exception(self):
         self.assertRaises(OutOfBatcherContextRegistrationException,
                           self.cached_function.register, 1, 2)
