@@ -3,9 +3,22 @@ pycacher
 
 Python module for easy function caching decoration, batching, and many more.
 
-Example Usage #1 (Simple function decorator):
-----------------
-    
+Complete documentation on:
+[http://pycacher.readthedocs.org](http://pycacher.readthedocs.org) (still empty)
+
+###PyPi Page
+[http://pypi.python.org/pypi/pycacher](http://pypi.python.org/pypi/pycacherl)
+
+###Installation
+This package is officially hosted on PyPI, so what you need to do is simply:
+
+    pip install pycacher
+
+###Examples:
+
+
+##### #1 Caching function decorator:
+
     from pycacher import Cacher
 
     cacher = Cacher('localhost', 11211)
@@ -14,11 +27,11 @@ Example Usage #1 (Simple function decorator):
     def expensive_function(a, b):
         return a + b
 
-    expensive_function(1, 2) #will actually execute
-    expensive_function(1, 2) #will get the value from the cache
+    expensive_function(1, 2) # will actually execute
+    expensive_function(1, 2) # will get the value from the cache
 
-Example Usage #2 (Batching):
-----------------
+##### #2 Batching:
+
     
     batcher = cacher.create_batcher()
 
@@ -31,12 +44,32 @@ Example Usage #2 (Batching):
     batcher.get_values()
     >> {'test-1':'test-value-1', 'test-2':'test-value-2', 'test-3' : None} 
 
+##### #3 Batching Context Manager:
 
-TODO : 
 
-- add prefix
-- decorated function call within a batcher ctx manager should look for values
-  inside the batcher first.
+    batcher = cacher.create_batcher()
 
-Authors:
+    with batcher:
+         #expensive_function is a pycacher-decorated function.
+         expensive_function.register(1, 2) 
+         expensive_function.register(1, 3)
+    
+    #batches the cache key of both those 2 function register calls.
+    batcher.batch()
+
+    with batcher:
+         expensive_function(1, 2) #will get its value directly from the batched value
+         expensive_function(1, 3)
+
+You can see more advanced examples on the [documentation](http://pycacher.readthedocs.org).
+
+###Prerequisites
+
+`pycacher` is currently well tested on Python 2.6 and 2.7.
+
+
+###License
+MIT 2.0
+
+###Authors:
 - Garindra Prahandono (garindraprahandono@gmail.com)
