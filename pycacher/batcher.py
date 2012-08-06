@@ -80,6 +80,9 @@ class Batcher(object):
     def get_last_batched_values(self):
         return self._last_batched_values
 
+    def get_values(self):
+        return self.get_last_batched_values()
+
     def get_keys(self):
         return self._keys
 
