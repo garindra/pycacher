@@ -1,5 +1,5 @@
-pycacher
-======
+pycacher [![Build Status](https://secure.travis-ci.org/garindra/pycacher.png)](https://secure.travis-ci.org/garindra/pycacher.png)
+=======
 
 Python module for easy function caching decoration, batching, and many more.
 
