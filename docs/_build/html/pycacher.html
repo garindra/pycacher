@@ -1,0 +1,570 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pycacher Package &mdash; pycacher 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pycacher 0.0.1 documentation" href="index.html" />
+    <link rel="next" title="test Package" href="pycacher.test.html" />
+    <link rel="prev" title="Welcome to pycacher’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pycacher.test.html" title="test Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pycacher’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pycacher 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pycacher-package">
+<h1>pycacher Package<a class="headerlink" href="#pycacher-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">pycacher</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-pycacher.__init__"></span><p>cacher is a Python module that enables easier integration with caching layer
+such as Memcached. It gives developers access to API that enables:</p>
+<ol class="arabic simple">
+<li>decoration of python function which automates caching and invalidation.</li>
+<li>Batching API</li>
+</ol>
+<dl class="class">
+<dt id="pycacher.__init__.Cacher">
+<em class="property">class </em><tt class="descclassname">pycacher.__init__.</tt><tt class="descname">Cacher</tt><big>(</big><em>host='localhost'</em>, <em>port=11211</em>, <em>client=None</em>, <em>backend=None</em>, <em>default_expires=None</em>, <em>cache_key_func=&lt;function default_cache_key_func at 0x10211f668&gt;</em><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Cacher is the the main object of the whole pycache packages, 
+which encapsulates connection with the Memcached client.</p>
+<p>Example instantiation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pycacher</span>
+
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">pycacher</span><span class="o">.</span><span class="n">Cacher</span><span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">11211</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, Cacher would be instantiated with <cite>MemcacheBackend</cite>. It&#8217;s possible
+to instantiate Cacher manually with a different backend, such as LocalBackend.
+Here&#8217;s how you do it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pycacher</span>
+<span class="kn">from</span> <span class="nn">pycacher.backends</span> <span class="kn">import</span> <span class="n">LocalBackend</span>
+
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">pycacher</span><span class="o">.</span><span class="n">Cacher</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">LocalBackend</span><span class="p">())</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pycacher.__init__.Cacher.cache">
+<tt class="descname">cache</tt><big>(</big><em>expires=None</em><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher.cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorates a function to be cacheable.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@cacher.cache</span><span class="p">(</span><span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">expensive_function</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.__init__.Cacher.create_batcher">
+<tt class="descname">create_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher.create_batcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simply creates a Batcher instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.__init__.Cacher.get_current_batcher">
+<tt class="descname">get_current_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher.get_current_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.__init__.Cacher.pop_batcher">
+<tt class="descname">pop_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher.pop_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.__init__.Cacher.push_batcher">
+<tt class="descname">push_batcher</tt><big>(</big><em>batcher</em><big>)</big><a class="headerlink" href="#pycacher.__init__.Cacher.push_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycacher.backends">
+<span id="backends-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">backends</span></tt> Module<a class="headerlink" href="#module-pycacher.backends" title="Permalink to this headline">¶</a></h2>
+<p>This module contains different wrapper classes for different caching backends.</p>
+<dl class="class">
+<dt id="pycacher.backends.Backend">
+<em class="property">class </em><tt class="descclassname">pycacher.backends.</tt><tt class="descname">Backend</tt><a class="headerlink" href="#pycacher.backends.Backend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pycacher.backends.Backend.get">
+<tt class="descname">get</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.Backend.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.Backend.set">
+<tt class="descname">set</tt><big>(</big><em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#pycacher.backends.Backend.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycacher.backends.LocalBackend">
+<em class="property">class </em><tt class="descclassname">pycacher.backends.</tt><tt class="descname">LocalBackend</tt><a class="headerlink" href="#pycacher.backends.LocalBackend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pycacher.backends.LocalBackend.delete">
+<tt class="descname">delete</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.LocalBackend.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.LocalBackend.exists">
+<tt class="descname">exists</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.LocalBackend.exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.LocalBackend.get">
+<tt class="descname">get</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.LocalBackend.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.LocalBackend.multi_get">
+<tt class="descname">multi_get</tt><big>(</big><em>keys</em><big>)</big><a class="headerlink" href="#pycacher.backends.LocalBackend.multi_get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.LocalBackend.set">
+<tt class="descname">set</tt><big>(</big><em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#pycacher.backends.LocalBackend.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycacher.backends.MemcacheBackend">
+<em class="property">class </em><tt class="descclassname">pycacher.backends.</tt><tt class="descname">MemcacheBackend</tt><big>(</big><em>client=None</em>, <em>host='127.0.0.1'</em>, <em>port=11211</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pycacher.backends.MemcacheBackend.delete">
+<tt class="descname">delete</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.MemcacheBackend.exists">
+<tt class="descname">exists</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend.exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.MemcacheBackend.get">
+<tt class="descname">get</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.MemcacheBackend.multi_get">
+<tt class="descname">multi_get</tt><big>(</big><em>keys</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend.multi_get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.backends.MemcacheBackend.set">
+<tt class="descname">set</tt><big>(</big><em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#pycacher.backends.MemcacheBackend.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycacher.backends.PycacherBackendArgumentException">
+<em class="property">exception </em><tt class="descclassname">pycacher.backends.</tt><tt class="descname">PycacherBackendArgumentException</tt><a class="headerlink" href="#pycacher.backends.PycacherBackendArgumentException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycacher.batcher">
+<span id="batcher-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">batcher</span></tt> Module<a class="headerlink" href="#module-pycacher.batcher" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycacher.batcher.Batcher">
+<em class="property">class </em><tt class="descclassname">pycacher.batcher.</tt><tt class="descname">Batcher</tt><big>(</big><em>cacher=None</em><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Batcher enables developers to batch multiple retrieval requests.</p>
+<p>Example usage #1:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pycacher</span> <span class="kn">import</span> <span class="n">Cacher</span>
+
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">Cacher</span><span class="p">()</span>
+<span class="n">batcher</span> <span class="o">=</span> <span class="n">cacher</span><span class="o">.</span><span class="n">create_batcher</span><span class="p">()</span>
+
+<span class="n">batcher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;testkey&#39;</span><span class="p">)</span>
+<span class="n">batcher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;testkey1&#39;</span><span class="p">)</span>
+<span class="n">batcher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;testkey2&#39;</span><span class="p">)</span>
+
+<span class="n">values</span> <span class="o">=</span> <span class="n">batcher</span><span class="o">.</span><span class="n">batch</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>It is possible to use batcher as context manager. Inside the context manager,
+developers can call the <cite>.register</cite> method of cached functions
+to register its keys to the currently active batcher for later batching. Then,
+when the actual cached functions that were registered earlier inside the
+context manager were actually called, it will seek its value from the batcher
+context.</p>
+<p>Example usage #2:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pycacher</span> <span class="kn">import</span> <span class="n">Cacher</span>
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">Cacher</span><span class="p">()</span>
+
+<span class="n">batcher</span> <span class="o">=</span> <span class="n">cacher</span><span class="o">.</span><span class="n">create_batcher</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">batcher</span><span class="p">:</span>
+    <span class="n">cached_func</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">cached_func_2</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">cached_func_3</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+<span class="n">batcher</span><span class="o">.</span><span class="n">batch</span><span class="p">()</span>
+
+<span class="c">#Later..</span>
+
+<span class="k">with</span> <span class="n">batcher</span><span class="p">:</span>
+    <span class="n">cached_func</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="c">#will look for its value from the batcher</span>
+    <span class="n">cached_func_2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">cached_func</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+<span class="c">#You can also do this:</span>
+
+<span class="n">batcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">cached_func</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">batcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">cached_func_2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.add">
+<tt class="descname">add</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.autobatch">
+<tt class="descname">autobatch</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.autobatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>autobatch enables the batcher to automatically batch the batcher keys
+in the end of the context manager call.</p>
+<p>Example Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">batcher</span><span class="o">.</span><span class="n">autobatch</span><span class="p">():</span>
+    <span class="n">expensive_function</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c">#is similar to:</span>
+
+<span class="k">with</span> <span class="n">batcher</span><span class="p">:</span>
+    <span class="n">expensive_function</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">batcher</span><span class="o">.</span><span class="n">batch</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.batch">
+<tt class="descname">batch</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.batch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.get">
+<tt class="descname">get</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.get_keys">
+<tt class="descname">get_keys</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.get_keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.get_last_batched_values">
+<tt class="descname">get_last_batched_values</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.get_last_batched_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.get_values">
+<tt class="descname">get_values</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.get_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.is_batched">
+<tt class="descname">is_batched</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.is_batched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a key is included in the latest batch.</p>
+<p>Example:</p>
+<p>self.batcher.add(&#8216;test-1&#8217;)</p>
+<p>self.batcher.batch()</p>
+<p>self.batcher.is_batched(&#8216;test-1&#8217;)
+&gt;&gt; True</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.register">
+<tt class="descname">register</tt><big>(</big><em>decorated_func</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.register" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.batcher.Batcher.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.batcher.Batcher.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycacher.batcher.OutOfBatcherContextRegistrationException">
+<em class="property">exception </em><tt class="descclassname">pycacher.batcher.</tt><tt class="descname">OutOfBatcherContextRegistrationException</tt><a class="headerlink" href="#pycacher.batcher.OutOfBatcherContextRegistrationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycacher.cacher">
+<span id="cacher-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">cacher</span></tt> Module<a class="headerlink" href="#module-pycacher.cacher" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycacher.cacher.CachedFunctionDecorator">
+<em class="property">class </em><tt class="descclassname">pycacher.cacher.</tt><tt class="descname">CachedFunctionDecorator</tt><big>(</big><em>func</em>, <em>cacher=None</em>, <em>expires=None</em>, <em>cache_key_func=&lt;function default_cache_key_func at 0x10211f668&gt;</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pycacher.cacher.CachedFunctionDecorator.build_cache_key">
+<tt class="descname">build_cache_key</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator.build_cache_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the cache key with the supplied cache_key function</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.CachedFunctionDecorator.invalidate">
+<tt class="descname">invalidate</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator.invalidate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invalidates the current function&#8217;s cache key with the current args.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">is_user_board_subscriber</span><span class="o">.</span><span class="n">invalidate</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">bid</span><span class="p">)</span> 
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.CachedFunctionDecorator.is_cached">
+<tt class="descname">is_cached</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator.is_cached" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simply checks if the current function value with the supplied args
+is currently cached in the backend.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.CachedFunctionDecorator.register">
+<tt class="descname">register</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the cached function on an active batcher context for later batching.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">batcher</span> <span class="o">=</span> <span class="n">cacher</span><span class="o">.</span><span class="n">create_batcher</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">batcher</span><span class="p">:</span>
+    <span class="n">cached_function</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">batcher</span><span class="o">.</span><span class="n">batch</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">batcher</span><span class="p">:</span>
+    <span class="n">cached_function</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="c">#now will look for its value in the current batcher&#39;s</span>
+                          <span class="c">#last batched values.</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.CachedFunctionDecorator.warm">
+<tt class="descname">warm</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pycacher.cacher.CachedFunctionDecorator.warm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forces to run the actual function (regardless of whether we already
+have the result on the cache or not) and set the backend to store
+the return value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycacher.cacher.Cacher">
+<em class="property">class </em><tt class="descclassname">pycacher.cacher.</tt><tt class="descname">Cacher</tt><big>(</big><em>host='localhost'</em>, <em>port=11211</em>, <em>client=None</em>, <em>backend=None</em>, <em>default_expires=None</em>, <em>cache_key_func=&lt;function default_cache_key_func at 0x10211f668&gt;</em><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Cacher is the the main object of the whole pycache packages, 
+which encapsulates connection with the Memcached client.</p>
+<p>Example instantiation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pycacher</span>
+
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">pycacher</span><span class="o">.</span><span class="n">Cacher</span><span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">11211</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, Cacher would be instantiated with <cite>MemcacheBackend</cite>. It&#8217;s possible
+to instantiate Cacher manually with a different backend, such as LocalBackend.
+Here&#8217;s how you do it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pycacher</span>
+<span class="kn">from</span> <span class="nn">pycacher.backends</span> <span class="kn">import</span> <span class="n">LocalBackend</span>
+
+<span class="n">cacher</span> <span class="o">=</span> <span class="n">pycacher</span><span class="o">.</span><span class="n">Cacher</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">LocalBackend</span><span class="p">())</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pycacher.cacher.Cacher.cache">
+<tt class="descname">cache</tt><big>(</big><em>expires=None</em><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher.cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorates a function to be cacheable.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@cacher.cache</span><span class="p">(</span><span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">expensive_function</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.Cacher.create_batcher">
+<tt class="descname">create_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher.create_batcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simply creates a Batcher instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.Cacher.get_current_batcher">
+<tt class="descname">get_current_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher.get_current_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.Cacher.pop_batcher">
+<tt class="descname">pop_batcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher.pop_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pycacher.cacher.Cacher.push_batcher">
+<tt class="descname">push_batcher</tt><big>(</big><em>batcher</em><big>)</big><a class="headerlink" href="#pycacher.cacher.Cacher.push_batcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycacher.decorators">
+<span id="decorators-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">decorators</span></tt> Module<a class="headerlink" href="#module-pycacher.decorators" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycacher.decorators.CachedFunction">
+<em class="property">class </em><tt class="descclassname">pycacher.decorators.</tt><tt class="descname">CachedFunction</tt><a class="headerlink" href="#pycacher.decorators.CachedFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycacher.decorators.cached">
+<tt class="descclassname">pycacher.decorators.</tt><tt class="descname">cached</tt><big>(</big><big>)</big><a class="headerlink" href="#pycacher.decorators.cached" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycacher.utils">
+<span id="utils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">utils</span></tt> Module<a class="headerlink" href="#module-pycacher.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycacher.utils.default_cache_key_func">
+<tt class="descclassname">pycacher.utils.</tt><tt class="descname">default_cache_key_func</tt><big>(</big><em>func</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pycacher.utils.default_cache_key_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default cache key function.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pycacher.test.html">test Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pycacher.test.html#module-pycacher.test.test_backends"><tt class="docutils literal"><span class="pre">test_backends</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pycacher.test.html#module-pycacher.test.test_batcher"><tt class="docutils literal"><span class="pre">test_batcher</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pycacher.test.html#module-pycacher.test.test_cacher"><tt class="docutils literal"><span class="pre">test_cacher</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pycacher.test.html#module-pycacher.test.test_decorator"><tt class="docutils literal"><span class="pre">test_decorator</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pycacher Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">pycacher</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-pycacher.backends"><tt class="docutils literal"><span class="pre">backends</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pycacher.batcher"><tt class="docutils literal"><span class="pre">batcher</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pycacher.cacher"><tt class="docutils literal"><span class="pre">cacher</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pycacher.decorators"><tt class="docutils literal"><span class="pre">decorators</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pycacher.utils"><tt class="docutils literal"><span class="pre">utils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pycacher&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pycacher.test.html"
+                        title="next chapter">test Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/pycacher.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pycacher.test.html" title="test Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pycacher’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">pycacher 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Garindra Prahandono.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
