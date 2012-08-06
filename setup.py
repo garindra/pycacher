@@ -6,6 +6,10 @@ try:
 except ImportError:
     pass
 
+
+with open(os.path.abspath('README.md')) as f:
+    long_description = f.read()
+
 setup(
 
     name="pycacher",
@@ -14,5 +18,6 @@ setup(
     author="Garindra Prahandono",
     author_email="garindraprahandono@gmail.com",
     url='http://pycacher.readthedocs.org',
-    description="pycacher is a python module which enables easy caching layer via function decorators, batcher, etc."
+    description="pycacher is a python module which enables easy caching layer via function decorators, batcher, etc.",
+    long_description=long_description
 )

@@ -7,7 +7,7 @@ Complete documentation on:
 [http://pycacher.readthedocs.org](http://pycacher.readthedocs.org) (still empty)
 
 ###PyPi Page
-[http://pypi.python.org/pypi/pycacher](http://pypi.python.org/pypi/pycacherl)
+[http://pypi.python.org/pypi/pycacher](http://pypi.python.org/pypi/pycacher)
 
 ###Installation
 This package is officially hosted on PyPI, so what you need to do is simply:
