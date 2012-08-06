@@ -65,7 +65,7 @@ You can see more advanced examples on the [documentation](http://pycacher.readth
 
 ###Prerequisites
 
-`pycacher` is currently well tested on Python 2.6 and 2.7.
+`pycacher` is currently well tested on Python 2.5, 2.6 and 2.7.
 
 ###Travis CI
 You can track the project's CI status on Travis at : [http://travis-ci.org/#!/garindra/pycacher](http://travis-ci.org/#!/garindra/pycacher)
