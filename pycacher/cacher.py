@@ -17,53 +17,16 @@ class Cacher(object):
         import pycacher
 
         cacher = pycacher.Cacher('localhost', 11211)
-    
-    ==========================================================
-     
-    1. Model function decorator
+   
 
-    With an instance of the cacher, then the developer can create
-    decorators to decorate model functions which automatically caches.
+    By default, Cacher would be instantiated with `MemcacheBackend`. It's possible
+    to instantiate Cacher manually with a different backend, such as LocalBackend.
+    Here's how you do it::
+        
+        import pycacher
+        from pycacher.backends import LocalBackend
 
-    @cacher.cache(expires=30 * 60)
-    def is_user_board_subscriber(uid, bid):
-        pass
-    
-    The first time the the `is_user_board_subscriber` is called, the function will
-    actually run the function. When the function is subsequently called,
-    then the result will be retrieved from the cache. Regular stuff.
-
-    Different arguments that can be passed to the function:
-
-    1. expires (in seconds) : tells how much after the number of seconds should the key
-                              be expired.
-
-    ==========================================================
-
-    2. Batcher
-
-    batcher = cacher.create_batcher()
-
-    batcher.add('test', 'testing')
-    batcher.add('test2', 'testing3')
-    batcher.add('test3', 'testing5')
-
-    batcher.reset()
-
-    values = batcher.batch()
-
-    ==========================================================
-
-    3. Recorder
-
-    recorder = cacher.create_recorder()
-
-    with recorder:
-        pass
-
-    recorder.get_recorded_keys()
-
-    ==========================================================
+        cacher = pycacher.Cacher(backend=LocalBackend())
 
     """
     def __init__(self, host='localhost', port=11211, client=None,
@@ -84,9 +47,9 @@ class Cacher(object):
 
         Example usage::
         
-        @cacher.cache(expires=None)
-        def expensive_function(a, b):
-            pass
+            @cacher.cache(expires=None)
+            def expensive_function(a, b):
+                pass
 
         """
         
@@ -187,7 +150,7 @@ class CachedFunctionDecorator(object):
     def register(self, *args):
         """Registers the cached function on an active batcher context for later batching.
             
-            Example usage;
+            Example usage::
 
                 batcher = cacher.create_batcher()
 

@@ -2,7 +2,7 @@ class Batcher(object):
     """
     Batcher enables developers to batch multiple retrieval requests.
 
-    Example usage #1:
+    Example usage #1::
 
 
         from pycacher import Cacher
@@ -17,15 +17,19 @@ class Batcher(object):
         values = batcher.batch()
 
 
-    Example usage #2:
-
     It is possible to use batcher as context manager. Inside the context manager,
     developers can call the `.register` method of cached functions
     to register its keys to the currently active batcher for later batching. Then,
     when the actual cached functions that were registered earlier inside the
     context manager were actually called, it will seek its value from the batcher
     context.
+
     
+    Example usage #2::
+        
+        from pycacher import Cacher
+        cacher = Cacher()
+
         batcher = cacher.create_batcher()
         
         with batcher:
@@ -42,7 +46,7 @@ class Batcher(object):
             cached_func_2(1, 2)
             cached_func(3, 5)
 
-        You can also do this:
+        #You can also do this:
 
         batcher.register(cached_func, 1, 2)
         batcher.register(cached_func_2, 1, 2)
@@ -105,16 +109,15 @@ class Batcher(object):
         return key in self._last_batched_values
 
     def autobatch(self):
-
-        """ autobatch enables the batcher to automatically batch the batcher keys
+        """autobatch enables the batcher to automatically batch the batcher keys
         in the end of the context manager call.
             
-            Example Usage:
+        Example Usage::
 
                 with batcher.autobatch():
                     expensive_function.register(1, 2)
 
-            is similar to:
+                #is similar to:
 
                 with batcher:
                     expensive_function.register(1, 2)
