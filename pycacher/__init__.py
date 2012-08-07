@@ -8,6 +8,8 @@
 
 """
 
-__all__ = ['Cacher']
+__version__ = '0.0.1'
 
 from .cacher import Cacher
+
+__all__ = ['Cacher']

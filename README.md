@@ -67,6 +67,10 @@ You can see more advanced examples on the [documentation](http://pycacher.readth
 
 `pycacher` is currently well tested on Python 2.5, 2.6 and 2.7.
 
+###Run unit tests
+If you have the `nose` Python unit tester library installed and want to run the unit test suite for this library, then simply run this command:
+    nosetests
+
 ###Travis CI
 You can track the project's CI status on Travis at : [http://travis-ci.org/#!/garindra/pycacher](http://travis-ci.org/#!/garindra/pycacher)
 
