@@ -18,6 +18,7 @@ setup(
     version=__version__,
     packages=['pycacher'],
     author="Garindra Prahandono",
+    install_requires=['python-memcached'],
     author_email="garindraprahandono@gmail.com",
     url='http://pycacher.readthedocs.org',
     download_url=('http://cloud.github.com/downloads/garindra/'
