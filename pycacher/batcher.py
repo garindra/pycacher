@@ -55,7 +55,7 @@ class Batcher(object):
     
     def __init__(self, cacher=None):
         self.cacher = cacher
-        self._keys = []
+        self._keys = set()
         self._last_batched_values = {}
 
         self._autobatch_flag = False
@@ -64,12 +64,12 @@ class Batcher(object):
 
         if isinstance(key, list):
             for k in key:
-                self._keys.append(k)
+                self._keys.add(k)
         else:
-            self._keys.append(key)
+            self._keys.add(key)
 
     def reset(self):
-        self._keys = []
+        self._keys = set()
 
     def batch(self):
         self._last_batched_values = self.cacher.backend.multi_get(self._keys)

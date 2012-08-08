@@ -29,13 +29,13 @@ class BatcherTestCase(unittest.TestCase):
         self.batcher.add('test-2')
         self.batcher.add('test-3')
 
-        assert self.batcher.get_keys() == ['test-1', 'test-2', 'test-3']
+        assert self.batcher.get_keys() == set(['test-1', 'test-2', 'test-3'])
 
     def test_add_list(self):
     
         self.batcher.add(['test-1', 'test-2', 'test-3'])
         
-        assert self.batcher.get_keys() == ['test-1', 'test-2', 'test-3']
+        assert self.batcher.get_keys() == set(['test-1', 'test-2', 'test-3'])
 
     def test_last_batched_values(self):
         self.batcher.add(['test-1', 'test-2', 'test-3'])
@@ -51,7 +51,7 @@ class BatcherTestCase(unittest.TestCase):
 
         self.batcher.reset()
 
-        assert self.batcher.get_keys() == []
+        self.assertEqual(self.batcher.get_keys(), set([]))
 
     def test_batch(self):
         
@@ -82,7 +82,7 @@ class BatcherTestCase(unittest.TestCase):
         self.batcher.register(self.cached_function, 1, 2)
         self.batcher.register(self.cached_function, 1, 3)
 
-        assert self.batcher.get_keys() == [cache_key, cache_key_2]
+        assert self.batcher.get_keys() == set([cache_key, cache_key_2])
 
     def test_context_manager_register(self):
         
