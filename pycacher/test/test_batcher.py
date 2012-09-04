@@ -1,9 +1,12 @@
 from __future__ import with_statement
 
 import unittest
+
+from mock import Mock
+
 import pycacher
 from pycacher.backends import LocalBackend
-from pycacher.batcher import OutOfBatcherContextRegistrationException
+from pycacher.exceptions import OutOfBatcherContextRegistrationException
 
 class BatcherTestCase(unittest.TestCase):
     
@@ -83,6 +86,24 @@ class BatcherTestCase(unittest.TestCase):
         self.batcher.register(self.cached_function, 1, 3)
 
         assert self.batcher.get_keys() == set([cache_key, cache_key_2])
+
+    def test_register_hook_on_cacher_level(self):
+        
+        on_register = Mock()
+        self.batcher.cacher.add_hook('register', on_register)
+
+        self.batcher.register(self.cached_function, 1, 2)
+
+        assert on_register.call_count == 1
+
+    def test_register_hook_on_batcher_level(self):
+        
+        on_register = Mock()
+        self.batcher.add_hook('register', on_register)
+
+        self.batcher.register(self.cached_function, 1, 2)
+
+        assert on_register.call_count == 1
 
     def test_context_manager_register(self):
         

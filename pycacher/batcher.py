@@ -56,9 +56,11 @@ class Batcher(object):
     def __init__(self, cacher=None):
         self.cacher = cacher
         self._keys = set()
-        self._last_batched_values = {}
+        self._last_batched_values = None
 
         self._autobatch_flag = False
+
+        self._hooks = {'register':[], 'call':[]}
 
     def add(self, key):
 
@@ -76,10 +78,21 @@ class Batcher(object):
 
         return self._last_batched_values
 
+    def has_batched(self):
+        return self._last_batched_values is not None
+
     def register(self, decorated_func, *args):
         cache_key = decorated_func.build_cache_key(*args)
 
         self.add(cache_key)
+    
+        #run the hooks on the batcher first
+        for fn in self._hooks['register']:
+            fn(cache_key, self)
+        
+        #run the hooks on the cacher level then
+        for fn in self.cacher._hooks['register']:
+            fn(cache_key, self)
 
     def get_last_batched_values(self):
         return self._last_batched_values
@@ -91,7 +104,10 @@ class Batcher(object):
         return self._keys
 
     def get(self, key):
-        return self._last_batched_values.get(key)
+        if self._last_batched_values:
+            return self._last_batched_values.get(key)
+
+        return None
 
     def is_batched(self, key):
         """Checks whether a key is included in the latest batch.
@@ -106,7 +122,9 @@ class Batcher(object):
             >> True
 
         """
-        return key in self._last_batched_values
+
+        if self._last_batched_values:
+            return key in self._last_batched_values
 
     def autobatch(self):
         """autobatch enables the batcher to automatically batch the batcher keys
@@ -135,13 +153,33 @@ class Batcher(object):
         functions that are registering, they know to which batcher to register to."""
         self.cacher.push_batcher(self)
 
+        #print "enter batcher"
+
     def __exit__(self, type, value, traceback):
         """ On exit, pop the batcher. """
 
         if self._autobatch_flag:
             self.batch()
             self._autobatch_flag = False
+
         self.cacher.pop_batcher()
 
-class OutOfBatcherContextRegistrationException(Exception):
-    pass
+        #print "exit batcher"
+
+    def add_hook(self, event, fn):
+        """ Add hook function to be executed on event.
+
+        Example usage::
+            
+            def on_cacher_invalidate(key):
+                pass
+
+            cacher.add_hook('invalidate', on_cacher_invalidate)
+
+        """
+        
+        if event not in ('invalidate', 'call', 'register'):
+            raise InvalidHookEventException(\
+                    "Hook event must be 'invalidate', 'call', or 'register'")
+    
+        self._hooks[event].append(fn)

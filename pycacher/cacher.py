@@ -3,7 +3,8 @@ import pickle
 
 from .backends import LocalBackend, MemcacheBackend
 from .utils import default_cache_key_func
-from .batcher import Batcher, OutOfBatcherContextRegistrationException
+from .batcher import Batcher
+from .exceptions import InvalidHookEventException, OutOfBatcherContextRegistrationException
 
 class Cacher(object):
 
@@ -41,6 +42,7 @@ class Cacher(object):
             self.backend = MemcacheBackend(host=host, port=port)
         
         self._batcher_ctx_stack = []
+        self._hooks = {'call':[], 'invalidate':[], 'register':[]}
 
     def cache(self, expires=None):
         """Decorates a function to be cacheable.
@@ -78,6 +80,27 @@ class Cacher(object):
     def pop_batcher(self):
         return self._batcher_ctx_stack.pop()
 
+    def get_batcher_stack_depth(self):
+        return len(self._batcher_ctx_stack)
+
+    def add_hook(self, event, fn):
+        """ Add hook function to be executed on event.
+
+        Example usage::
+            
+            def on_cacher_invalidate(key):
+                pass
+
+            cacher.add_hook('invalidate', on_cacher_invalidate)
+
+        """
+        
+        if event not in ('invalidate', 'call', 'register'):
+            raise InvalidHookEventException(\
+                    "Hook event must be 'invalidate', 'call', or 'register'")
+    
+        self._hooks[event].append(fn)
+
 class CachedFunctionDecorator(object):
     
     def __init__(self, func, cacher=None, expires=None, 
@@ -100,7 +123,7 @@ class CachedFunctionDecorator(object):
         else:
             unpickled_value = self.cacher.backend.get(cache_key)
 
-        if unpickled_value:
+        if unpickled_value is not None:
             return pickle.loads(unpickled_value)
         else:
             value = self.func(*args)
@@ -145,7 +168,16 @@ class CachedFunctionDecorator(object):
             is_user_board_subscriber.invalidate(uid, bid) 
 
         """
-        return self.cacher.backend.delete(self._build_cache_key(*args))
+
+        key = self._build_cache_key(*args)
+
+        rv = self.cacher.backend.delete(key)
+        
+        #run all the invalidate hooks
+        for fn in self.cacher._hooks['invalidate']:
+            fn(key)
+
+        return rv
 
     def register(self, *args):
         """Registers the cached function on an active batcher context for later batching.

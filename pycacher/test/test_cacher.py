@@ -1,5 +1,7 @@
 import unittest
 
+from mock import Mock
+
 from pycacher import Cacher
 from pycacher.backends import MemcacheBackend, LocalBackend
 
@@ -22,3 +24,4 @@ class CacherTestCase(unittest.TestCase):
         cacher = Cacher('localhost', 11211)
 
         self.assertTrue(isinstance(cacher.backend, MemcacheBackend))
+

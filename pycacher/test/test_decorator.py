@@ -91,3 +91,14 @@ class DecoratedFunctionsTestCase(unittest.TestCase):
         self.decorated_function.invalidate(1, 2) 
 
         assert self.cacher.backend.exists(cache_key) == False
+
+    def test_invalidate_hook(self):
+        
+        on_invalidate = Mock()
+
+        self.cacher.add_hook('invalidate', on_invalidate)
+
+        self.decorated_function.warm(1, 2)
+        self.decorated_function.invalidate(1, 2)
+
+        assert on_invalidate.call_count == 1
