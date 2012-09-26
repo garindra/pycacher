@@ -156,9 +156,7 @@ class CachedListFunctionDecorator(object):
         #Go through each of the range pair.
         for rp in range_pairs:
 
-            cache_key_kwargs = {'start':rp[0], 'end':rp[1]}
-
-            cache_key = self.build_cache_key(*args, **cache_key_kwargs)
+            cache_key = self.build_cache_key(start=rp[0], end=rp[1], *args)
 
             print "cache_key", cache_key
 
@@ -179,7 +177,7 @@ class CachedListFunctionDecorator(object):
                     skip = rp[0] - 1
 
                 #Call the actual function with the correct skip and the limit.
-                value = self.func(*args, skip=skip, limit=self.range)
+                value = self.func(skip=skip, limit=self.range, *args)
                 self.cacher.backend.set(cache_key, pickle.dumps(value))
 
                 skip += self.range
