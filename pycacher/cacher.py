@@ -123,3 +123,6 @@ class Cacher(object):
 
     def get(self, key):
         return pickle.loads(self.backend.get(key))
+
+    def set(self, key, value):
+        return self.backend.set(key, pickle.dumps(value))
