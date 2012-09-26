@@ -7,6 +7,7 @@ from mock import Mock
 
 from pycacher.backends import LocalBackend
 from pycacher.cacher import Cacher, CachedFunctionDecorator
+from pycacher.decorators import CachedListFunctionDecorator
 
 class CachedDecoratorClassTestCase(unittest.TestCase):
     
@@ -64,6 +65,47 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
         decorated_func(3)
         
         assert func.call_count == 3
+
+class CachedListFunctionDecoratorTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.cacher = Cacher(backend=LocalBackend())
+
+        self.func = self.create_mock(return_value=[1, 2, 3, 4, 5])
+        self.decorated_func = CachedListFunctionDecorator(self.func, cacher=self.cacher, range=5) 
+
+    def create_mock(self, *args, **kwargs):
+        mock = Mock(*args, **kwargs)
+        mock.__name__ = 'testing'
+
+        return mock
+
+    def test_called_the_correct_n_times(self):
+        
+        self.decorated_func(1, skip=0, limit=15)
+
+        self.assertEqual(self.func.call_count, 3)
+
+    def test_called_with_correct_values(self):
+        
+        self.decorated_func(1, skip=0, limit=15)
+
+        self.func.assert_any_call(1, skip=0, limit=5)
+        self.func.assert_any_call(1, skip=5, limit=5)
+        self.func.assert_any_call(1, skip=10, limit=5)
+
+    def test_return_correct_value(self):
+        
+        self.assertEqual(self.decorated_func(1, skip=0, limit=15),
+                         [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5])
+
+    def test_cache_stores_correct_values(self):
+        
+        self.decorated_func(1, skip=0, limit=15)
+        
+        self.assertEqual(self.cacher.get("mock.testing:1[0:5]"), [1, 2, 3, 4, 5])
+        self.assertEqual(self.cacher.get("mock.testing:1[6:10]"), [1, 2, 3, 4, 5])
+        self.assertEqual(self.cacher.get("mock.testing:1[11:15]"), [1, 2, 3, 4, 5])
 
 class DecoratedFunctionsTestCase(unittest.TestCase):
     

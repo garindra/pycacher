@@ -1,4 +1,5 @@
 import pickle
+import math
 
 from .utils import default_cache_key_func
 from .exceptions import InvalidHookEventException, OutOfBatcherContextRegistrationException
@@ -105,10 +106,11 @@ class CachedFunctionDecorator(object):
         else:
             raise OutOfBatcherContextRegistrationException()
 
-class CachedListFunctionDecorator(CachedFunctionDecorator):
+class CachedListFunctionDecorator(object):
     
     def __init__(self, func, cacher=None, expires=None, 
-                        cache_key_func=default_cache_key_func):
+                        cache_key_func=default_cache_key_func, range=10, 
+                        skip_key='skip', limit_key='limit'):
         self.func = func
         self.cacher = cacher
         self.cache_key_func = cache_key_func
@@ -118,4 +120,128 @@ class CachedListFunctionDecorator(CachedFunctionDecorator):
         self.limit_key = limit_key
 
     def __call__(self, *args, **kwargs):
+        """
+            
+        Example usage::
+
+            app.models.user.get_user_activity_ids(1, skip=0, limit=15)
+
+        When this function is called, it will compare the delta between limit and
+        skip and decide which "chunks" it should get.
+
+        For example, if the range of the cached function is 5, and the requested 
+        skip & limit is 0 & 15, it will then try to call the actual function with 3 different
+        skip & limit pairs, which are 0:5, 6:10, and 11:15.
+
+             
+
+        """
+        
+        limit = kwargs[self.limit_key]
+        skip = kwargs[self.skip_key]
+        
+        #Get the range pairs.
+        range_pairs = self._get_range_pairs(self.range, skip, limit)
+
+        print "CALL!", range_pairs
+
+        #This list will store all the values that needs to be returned according
+        #to the skip & limit rule.
+        return_list = []
+        
+        batcher = self.cacher.get_current_batcher()
+
+        first_iter = True
+        
+        #Go through each of the range pair.
+        for rp in range_pairs:
+
+            cache_key = self.build_cache_key(*args, start=rp[0], end=rp[1])
+
+            print "cache_key", cache_key
+
+            if batcher:
+                unpickled_value = batcher.get(cache_key) or self.cacher.backend.get(cache_key)
+            else:
+                unpickled_value = self.cacher.backend.get(cache_key)
+
+            if unpickled_value is not None:
+
+                #append the value to the return list
+                value = pickle.loads(unpickled_value)
+            else:
+                
+                if first_iter:
+                    skip = rp[0]
+                else:
+                    skip = rp[0] - 1
+
+                #Call the actual function with the correct skip and the limit.
+                value = self.func(*args, skip=skip, limit=self.range)
+                self.cacher.backend.set(cache_key, pickle.dumps(value))
+
+                skip += self.range
+
+            return_list += value
+
+            first_iter = False
+        
+        #TODO : cut the return list to only include what's actually requested.
+
+        return return_list
+
+    def _get_range_pairs(self, range_, skip, limit):
+        """
+            Returns (0, 5), (6, 10), (11, 15)
+        """
+        range_limit = range_ * int(math.ceil(limit/range_))
+        skip_limit = range_ * (skip/range_)
+        
+        """
+        print "RANGE", range_
+        print "SKIP", skip
+        print "LIMIT", limit
+        print "RANGE LIMIT", range_limit
+        """
+
+        l = []
+        i = 0
+
+        for lower_bound in xrange(skip_limit, range_limit, range_):
+            
+            if i == 0:
+                l.append((lower_bound, lower_bound + range_))
+            else:
+                l.append((lower_bound + 1, lower_bound + range_))
+
+            i += 1
+
+        return l
+
+        """
+        return [(lower_bound, lower_bound + range_) 
+                for lower_bound in xrange(skip_limit, range_limit, range_)]
+        """
+
+    def invalidate(self, *args):
         pass
+
+    def build_cache_key(self, *args, **kwargs):
+        """
+            app.models.user.get_user_activity_ids:1[0:5]
+            app.models.user.get_user_activity_ids:1[6:10]
+            app.models.user.get_user_activity_ids:1[11:15]
+        """
+        return self.cache_key_func(self.func, *args) + ('[%s:%s]' % (int(kwargs['start']), 
+                                                                     int(kwargs['end'])))
+
+    def register(self, *args, **kwargs):
+        """
+            app.models.user.get_user_activity_ids.register(1, skip=None, limit=None)
+        """
+        batcher = self.cacher.get_current_batcher()
+
+        if batcher:
+            pass
+        else:
+            raise OutOfBatcherContextRegistrationException()

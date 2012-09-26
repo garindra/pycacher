@@ -120,3 +120,6 @@ class Cacher(object):
                     "Hook event must be 'invalidate', 'call', or 'register'")
     
         self._hooks[event].append(fn)
+
+    def get(self, key):
+        return pickle.loads(self.backend.get(key))
