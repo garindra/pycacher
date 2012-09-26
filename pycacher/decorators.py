@@ -156,7 +156,9 @@ class CachedListFunctionDecorator(object):
         #Go through each of the range pair.
         for rp in range_pairs:
 
-            cache_key = self.build_cache_key(*args, start=rp[0], end=rp[1])
+            cache_key_kwargs = {'start':rp[0], 'end':rp[1]}
+
+            cache_key = self.build_cache_key(*args, **cache_key_kwargs)
 
             print "cache_key", cache_key
 
@@ -197,13 +199,6 @@ class CachedListFunctionDecorator(object):
         range_limit = range_ * int(math.ceil(limit/range_))
         skip_limit = range_ * (skip/range_)
         
-        """
-        print "RANGE", range_
-        print "SKIP", skip
-        print "LIMIT", limit
-        print "RANGE LIMIT", range_limit
-        """
-
         l = []
         i = 0
 
@@ -217,11 +212,6 @@ class CachedListFunctionDecorator(object):
             i += 1
 
         return l
-
-        """
-        return [(lower_bound, lower_bound + range_) 
-                for lower_bound in xrange(skip_limit, range_limit, range_)]
-        """
 
     def invalidate(self, *args):
         pass
