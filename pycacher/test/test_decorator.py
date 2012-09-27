@@ -116,8 +116,6 @@ class CachedListFunctionDecoratorTestCase(unittest.TestCase):
         self.assertEqual(self.decorated_func.get_ranged_cache_keys(1, skip=10, limit=5),
                          ['mock.testing:1[11:15]'])
 
-        assert False
-
     def test_cache_stores_correct_values(self):
         
         self.decorated_func(1, skip=0, limit=15)
