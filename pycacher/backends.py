@@ -30,7 +30,10 @@ class LocalBackend(object):
         return self._dict.get(key)
 
     def delete(self, key):
-        del self._dict[key]
+        try:
+            del self._dict[key]
+        except KeyError: #suppress error on deletion of non-existent keys
+            pass
 
     def exists(self, key):
         return self._dict.get(key) is not None

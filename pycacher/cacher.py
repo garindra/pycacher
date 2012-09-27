@@ -126,3 +126,6 @@ class Cacher(object):
 
     def set(self, key, value):
         return self.backend.set(key, pickle.dumps(value))
+
+    def delete(self, key):
+        return self.backend.delete(key)

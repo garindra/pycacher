@@ -74,7 +74,7 @@ class CachedFunctionDecorator(object):
 
         key = self._build_cache_key(*args)
 
-        rv = self.cacher.backend.delete(key)
+        rv = self.cacher.delete(key)
         
         #run all the invalidate hooks
         for fn in self.cacher._hooks['invalidate']:
@@ -133,8 +133,6 @@ class CachedListFunctionDecorator(object):
         skip & limit is 0 & 15, it will then try to call the actual function with 3 different
         skip & limit pairs, which are 0:5, 6:10, and 11:15.
 
-             
-
         """
         
         limit = kwargs[self.limit_key]
@@ -142,8 +140,6 @@ class CachedListFunctionDecorator(object):
         
         #Get the range pairs.
         range_pairs = self._get_range_pairs(self.range, skip, limit)
-
-        print "CALL!", range_pairs
 
         #This list will store all the values that needs to be returned according
         #to the skip & limit rule.
@@ -156,7 +152,7 @@ class CachedListFunctionDecorator(object):
         #Go through each of the range pair.
         for rp in range_pairs:
 
-            cache_key = self.build_cache_key(start=rp[0], end=rp[1], *args)
+            cache_key = self.build_ranged_cache_key(start=rp[0], end=rp[1], *args)
 
             print "cache_key", cache_key
 
@@ -172,37 +168,50 @@ class CachedListFunctionDecorator(object):
             else:
                 
                 if first_iter:
-                    skip = rp[0]
+                    func_skip = rp[0]
                 else:
-                    skip = rp[0] - 1
+                    func_skip = rp[0] - 1
 
                 #Call the actual function with the correct skip and the limit.
-                value = self.func(skip=skip, limit=self.range, *args)
-                self.cacher.backend.set(cache_key, pickle.dumps(value))
-
-                skip += self.range
+                value = self.func(skip=func_skip, limit=self.range, *args)
+                self.cacher.set(cache_key, value)
 
             return_list += value
+            
+            #if the length of value is less than range, then that means the
+            #function won't have anything to return anyways in subsequent range iterations
+            #so let's just stop running them.
+            if len(value) < self.range:
+                break
 
             first_iter = False
         
-        #TODO : cut the return list to only include what's actually requested.
+        print "ORIGINAL RETURN LIST", len(return_list), return_list
+        
+        cut_return_list = return_list[0:limit]
 
-        return return_list
+        print "after cut", cut_return_list
+        #TODO : make this more performant
+        #only return n-many return values that is requested.
+        return cut_return_list
 
     def _get_range_pairs(self, range_, skip, limit):
         """
             Returns (0, 5), (6, 10), (11, 15)
         """
-        range_limit = range_ * int(math.ceil(limit/range_))
+        range_limit = range_ * int(math.ceil(float(limit + skip)/range_))
         skip_limit = range_ * (skip/range_)
         
         l = []
         i = 0
+    
+        print "original skip", skip
+        print "SKIP LIMIT", skip_limit
+        print "RANGE LIMIT", range_limit
 
         for lower_bound in xrange(skip_limit, range_limit, range_):
             
-            if i == 0:
+            if i == 0 and skip_limit == 0:
                 l.append((lower_bound, lower_bound + range_))
             else:
                 l.append((lower_bound + 1, lower_bound + range_))
@@ -212,24 +221,56 @@ class CachedListFunctionDecorator(object):
         return l
 
     def invalidate(self, *args):
-        pass
+        """
+        
+        Example usage::
 
-    def build_cache_key(self, *args, **kwargs):
+            app.models.user.get_user_friend_ids.invalidate(1)
+        
+        app.models.user.get_user_activity_ids:1[$LIMIT]
+
+        When invalidates, what we do is to know [0:5],[6:10],[11:15]
+
+        """
+        
+        #TODO : limit has to be retrieved from metakey
+        ranged_keys_to_invalidate = self.get_ranged_cache_keys(skip=0, limit=75, *args)
+        
+        for ranged_key in ranged_keys_to_invalidate:
+            self.cacher.delete(ranged_key)
+        
+        key = self.build_cache_key(*args)
+
+        #run all the invalidate hooks with the root cache key
+        for fn in self.cacher._hooks['invalidate']:
+            fn(key)
+    
+    def build_cache_key(self, *args):
+        return self.cache_key_func(self.func, *args)
+
+    def build_ranged_cache_key(self, *args, **kwargs):
         """
             app.models.user.get_user_activity_ids:1[0:5]
             app.models.user.get_user_activity_ids:1[6:10]
             app.models.user.get_user_activity_ids:1[11:15]
         """
-        return self.cache_key_func(self.func, *args) + ('[%s:%s]' % (int(kwargs['start']), 
-                                                                     int(kwargs['end'])))
+        return self.build_cache_key(*args) + ('[%s:%s]' % (int(kwargs['start']), int(kwargs['end'])))
+
+    def get_ranged_cache_keys(self, *args, **kwargs):
+        
+        range_pairs = self._get_range_pairs(self.range, kwargs['skip'], kwargs['limit'])
+
+        return [self.build_ranged_cache_key(start=rp[0], end=rp[1], *args)
+                for rp in range_pairs]
 
     def register(self, *args, **kwargs):
         """
             app.models.user.get_user_activity_ids.register(1, skip=None, limit=None)
         """
+
         batcher = self.cacher.get_current_batcher()
 
         if batcher:
-            pass
+            batcher.register_list(self, skip=kwargs['skip'], limit=kwargs['limit'], *args)
         else:
             raise OutOfBatcherContextRegistrationException()

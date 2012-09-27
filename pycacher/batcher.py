@@ -94,6 +94,31 @@ class Batcher(object):
         for fn in self.cacher._hooks['register']:
             fn(cache_key, self)
 
+    def register_list(self, decorated_list_func, *args, **kwargs):
+        """Registers a cached list function.
+
+        """
+
+        skip = kwargs['skip']
+        limit = kwargs['limit']
+
+        #add the ranged cache keys to the actual internal key batch list.
+        for ranged_cache_key in decorated_list_func.get_ranged_cache_keys(skip=skip, limit=limit, *args):
+            self.add(ranged_cache_key)
+
+        #Build the "root" cache key to be passed to the hook functions.
+        #Note that we do not pass the ranged cache key to the hook functions,
+        #it's completely for internal use.
+        cache_key = decorated_list_func.build_cache_key(*args)
+
+        #run the hooks on the batcher first
+        for fn in self._hooks['register']:
+            fn(cache_key, self)
+        
+        #run the hooks on the cacher level then
+        for fn in self.cacher._hooks['register']:
+            fn(cache_key, self)
+
     def get_last_batched_values(self):
         return self._last_batched_values
 
@@ -125,6 +150,8 @@ class Batcher(object):
 
         if self._last_batched_values:
             return key in self._last_batched_values
+
+        return False
 
     def autobatch(self):
         """autobatch enables the batcher to automatically batch the batcher keys

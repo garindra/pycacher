@@ -95,9 +95,28 @@ class CachedListFunctionDecoratorTestCase(unittest.TestCase):
         self.func.assert_any_call(1, skip=10, limit=5)
 
     def test_return_correct_value(self):
+
+        self.assertEqual(self.decorated_func(1, skip=0, limit=8),
+                         [1, 2, 3, 4, 5, 1, 2, 3])
         
         self.assertEqual(self.decorated_func(1, skip=0, limit=15),
                          [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5])
+
+    def test_get_ranged_cache_keys(self):
+        
+        self.assertEqual(self.decorated_func.get_ranged_cache_keys(1, skip=0, limit=9),
+                         ['mock.testing:1[0:5]', 'mock.testing:1[6:10]'])
+
+        self.assertEqual(self.decorated_func.get_ranged_cache_keys(1, skip=4, limit=5),
+                         ['mock.testing:1[0:5]', 'mock.testing:1[6:10]'])
+
+        self.assertEqual(self.decorated_func.get_ranged_cache_keys(1, skip=12, limit=5),
+                         ['mock.testing:1[11:15]', 'mock.testing:1[16:20]'])
+
+        self.assertEqual(self.decorated_func.get_ranged_cache_keys(1, skip=10, limit=5),
+                         ['mock.testing:1[11:15]'])
+
+        assert False
 
     def test_cache_stores_correct_values(self):
         
@@ -106,6 +125,40 @@ class CachedListFunctionDecoratorTestCase(unittest.TestCase):
         self.assertEqual(self.cacher.get("mock.testing:1[0:5]"), [1, 2, 3, 4, 5])
         self.assertEqual(self.cacher.get("mock.testing:1[6:10]"), [1, 2, 3, 4, 5])
         self.assertEqual(self.cacher.get("mock.testing:1[11:15]"), [1, 2, 3, 4, 5])
+
+    def test_register(self):
+        
+        batcher = self.cacher.create_batcher()
+
+        hook_mock = Mock()
+
+        batcher.add_hook('register', hook_mock)
+
+        with batcher:
+            self.decorated_func.register(1, skip=0, limit=9)
+            
+        #Test the internal ranged cache keys
+        self.assertTrue('mock.testing:1[0:5]' in batcher.get_keys())
+        self.assertTrue('mock.testing:1[6:10]' in batcher.get_keys())
+
+        hook_mock.assert_called_with('mock.testing:1', batcher)
+
+    def test_invalidate(self):
+        
+        batcher = self.cacher.create_batcher()
+
+        hook_mock = Mock()
+        self.cacher.add_hook('invalidate', hook_mock)
+
+        self.decorated_func(1, skip=0, limit=9)
+
+        self.decorated_func.invalidate(1)
+        
+        #After invalidation, the backend shouldn't have anything.
+        self.assertEqual(self.cacher.backend.get('mock.testing:1[0:5]'), None)
+        self.assertEqual(self.cacher.backend.get('mock.testing:1[6:10]'), None)
+
+        hook_mock.assert_called_with('mock.testing:1')
 
 class DecoratedFunctionsTestCase(unittest.TestCase):
     
