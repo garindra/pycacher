@@ -1,7 +1,11 @@
+
+from __future__ import with_statement
+
 import unittest
 import pickle
 import memcache
 import random
+
 
 from mock import Mock
 
