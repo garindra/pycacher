@@ -87,12 +87,8 @@ class Batcher(object):
         self.add(cache_key)
     
         #run the hooks on the batcher first
-        for fn in self._hooks['register']:
-            fn(cache_key, self)
-        
-        #run the hooks on the cacher level then
-        for fn in self.cacher._hooks['register']:
-            fn(cache_key, self)
+        self.trigger_hooks('register', cache_key, self)
+        self.cacher.trigger_hooks('register', cache_key, self)
 
     def register_list(self, decorated_list_func, *args, **kwargs):
         """Registers a cached list function.

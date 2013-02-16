@@ -32,10 +32,10 @@ class CachedFunctionDecorator(object):
             value = self.func(*args)
             self.cacher.backend.set(cache_key, pickle.dumps(value))
 
-        self.cacher.trigger_hooks('call', cache_key, *args)
+        self.cacher.trigger_hooks('call', cache_key)
 
         if batcher:
-            batcher.trigger_hooks('call', cache_key, *args)
+            batcher.trigger_hooks('call', cache_key)
             
         return value
 

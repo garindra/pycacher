@@ -113,7 +113,7 @@ class BatcherTestCase(unittest.TestCase):
         with self.batcher:
             self.cached_function(1, 2)
 
-        assert on_call.call_count == 1
+        on_call.assert_called_once_with('pycacher.test.test_batcher.cached_function:1:2')
 
     def test_call_hook_on_batcher_level(self):
         
@@ -123,7 +123,7 @@ class BatcherTestCase(unittest.TestCase):
         with self.batcher:
             self.cached_function(1, 2)
 
-        assert on_call.call_count == 1
+        on_call.assert_called_once_with('pycacher.test.test_batcher.cached_function:1:2')
 
     def test_context_manager_register(self):
         
