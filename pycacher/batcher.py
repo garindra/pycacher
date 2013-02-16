@@ -112,12 +112,8 @@ class Batcher(object):
         cache_key = decorated_list_func.build_cache_key(*args)
 
         #run the hooks on the batcher first
-        for fn in self._hooks['register']:
-            fn(cache_key, self)
-        
-        #run the hooks on the cacher level then
-        for fn in self.cacher._hooks['register']:
-            fn(cache_key, self)
+        self.trigger_hooks('register', cache_key, self)
+        self.cacher.trigger_hooks('register', cache_key, self)
 
     def get_last_batched_values(self):
         return self._last_batched_values
@@ -210,3 +206,13 @@ class Batcher(object):
                     "Hook event must be 'invalidate', 'call', or 'register'")
     
         self._hooks[event].append(fn)
+
+
+    def trigger_hooks(self, event, *args, **kwargs):
+        
+        if event not in ('invalidate', 'call', 'register'):
+            raise InvalidHookEventException(\
+                    "Hook event must be 'invalidate', 'call', or 'register'")
+
+        for fn in self._hooks[event]:
+            fn(*args, **kwargs)

@@ -60,7 +60,7 @@ class CachedDecoratorClassTestCase(unittest.TestCase):
 
         assert decorated_func.is_cached(1) == False
 
-    def test_decorated_function_should_only_be_called_multiple_times_if_args_are_different(self):
+    def test_decorated_function_should_be_called_multiple_times_if_args_are_different(self):
         func = self.create_mock(return_value='testing')
         decorated_func = CachedFunctionDecorator(func, cacher=self.cacher)
 

@@ -27,11 +27,17 @@ class CachedFunctionDecorator(object):
             unpickled_value = self.cacher.backend.get(cache_key)
 
         if unpickled_value is not None:
-            return pickle.loads(unpickled_value)
+            value = pickle.loads(unpickled_value)
         else:
             value = self.func(*args)
             self.cacher.backend.set(cache_key, pickle.dumps(value))
-            return value
+
+        self.cacher.trigger_hooks('call', cache_key, *args)
+
+        if batcher:
+            batcher.trigger_hooks('call', cache_key, *args)
+            
+        return value
 
     def _build_cache_key(self, *args):
         """Builds the cache key with the supplied cache_key function """
@@ -77,8 +83,7 @@ class CachedFunctionDecorator(object):
         rv = self.cacher.delete(key)
         
         #run all the invalidate hooks
-        for fn in self.cacher._hooks['invalidate']:
-            fn(key)
+        self.cacher.trigger_hooks('invalidate', key)
 
         return rv
 
@@ -242,8 +247,7 @@ class CachedListFunctionDecorator(object):
         key = self.build_cache_key(*args)
 
         #run all the invalidate hooks with the root cache key
-        for fn in self.cacher._hooks['invalidate']:
-            fn(key)
+        self.cacher.trigger_hooks('invalidate', key)
     
     def build_cache_key(self, *args):
         return self.cache_key_func(self.func, *args)

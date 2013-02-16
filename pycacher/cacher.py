@@ -121,6 +121,15 @@ class Cacher(object):
     
         self._hooks[event].append(fn)
 
+    def trigger_hooks(self, event, *args, **kwargs):
+        
+        if event not in ('invalidate', 'call', 'register'):
+            raise InvalidHookEventException(\
+                    "Hook event must be 'invalidate', 'call', or 'register'")
+
+        for fn in self._hooks[event]:
+            fn(*args, **kwargs)
+
     def get(self, key):
         return pickle.loads(self.backend.get(key))
 

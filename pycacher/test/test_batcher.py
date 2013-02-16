@@ -105,6 +105,26 @@ class BatcherTestCase(unittest.TestCase):
 
         assert on_register.call_count == 1
 
+    def test_call_hook_on_cacher_level(self):
+        
+        on_call = Mock()
+        self.batcher.cacher.add_hook('call', on_call)
+
+        with self.batcher:
+            self.cached_function(1, 2)
+
+        assert on_call.call_count == 1
+
+    def test_call_hook_on_batcher_level(self):
+        
+        on_call = Mock()
+        self.batcher.add_hook('call', on_call)
+
+        with self.batcher:
+            self.cached_function(1, 2)
+
+        assert on_call.call_count == 1
+
     def test_context_manager_register(self):
         
         with self.batcher:
@@ -114,8 +134,6 @@ class BatcherTestCase(unittest.TestCase):
         cache_key = self.cached_function.build_cache_key(1, 2)
         cache_key_2 = self.cached_function.build_cache_key(1, 3)
         
-        #self.assertEqual(self.batcher.get_keys(), [cache_key, cache_key_2])
-
         self.assertFalse(self.batcher.is_batched(cache_key))
         
         self.batcher.batch()
