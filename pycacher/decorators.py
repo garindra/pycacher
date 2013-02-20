@@ -49,11 +49,9 @@ class CachedFunctionDecorator(object):
 
     def warm(self, *args):
         """
-
             Forces to run the actual function (regardless of whether we already
             have the result on the cache or not) and set the backend to store
             the return value.
-
         """
         cache_key = self._build_cache_key(*args)
 

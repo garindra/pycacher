@@ -172,7 +172,7 @@ class Batcher(object):
         functions that are registering, they know to which batcher to register to."""
         self.cacher.push_batcher(self)
 
-        #print "enter batcher"
+        print "enter batcher"
 
     def __exit__(self, type, value, traceback):
         """ On exit, pop the batcher. """
@@ -182,8 +182,6 @@ class Batcher(object):
             self._autobatch_flag = False
 
         self.cacher.pop_batcher()
-
-        #print "exit batcher"
 
     def add_hook(self, event, fn):
         """ Add hook function to be executed on event.
@@ -212,3 +210,11 @@ class Batcher(object):
 
         for fn in self._hooks[event]:
             fn(*args, **kwargs)
+
+    def remove_all_hooks(self, event):
+        if event not in ('invalidate', 'call', 'register'):
+            raise InvalidHookEventException(\
+                    "Hook event must be 'invalidate', 'call', or 'register'")
+        
+        #reset
+        self._hooks[event] = []
