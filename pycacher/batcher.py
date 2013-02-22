@@ -172,8 +172,6 @@ class Batcher(object):
         functions that are registering, they know to which batcher to register to."""
         self.cacher.push_batcher(self)
 
-        print "enter batcher"
-
     def __exit__(self, type, value, traceback):
         """ On exit, pop the batcher. """
 

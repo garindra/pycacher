@@ -157,7 +157,7 @@ class CachedListFunctionDecorator(object):
 
             cache_key = self.build_ranged_cache_key(start=rp[0], end=rp[1], *args)
 
-            print "cache_key", cache_key
+            #print "cache_key", cache_key
 
             if batcher:
                 unpickled_value = batcher.get(cache_key) or self.cacher.backend.get(cache_key)
@@ -188,12 +188,19 @@ class CachedListFunctionDecorator(object):
                 break
 
             first_iter = False
+
+            print "CALLING CACHE_KEY", cache_key
+
+            self.cacher.trigger_hooks('call', cache_key)
+
+            if batcher:
+                batcher.trigger_hooks('call', cache_key)
         
-        print "ORIGINAL RETURN LIST", len(return_list), return_list
+        #print "ORIGINAL RETURN LIST", len(return_list), return_list
         
         cut_return_list = return_list[0:limit]
 
-        print "after cut", cut_return_list
+        #print "after cut", cut_return_list
         #TODO : make this more performant
         #only return n-many return values that is requested.
         return cut_return_list
@@ -208,9 +215,9 @@ class CachedListFunctionDecorator(object):
         l = []
         i = 0
     
-        print "original skip", skip
-        print "SKIP LIMIT", skip_limit
-        print "RANGE LIMIT", range_limit
+        #print "original skip", skip
+        #print "SKIP LIMIT", skip_limit
+        #print "RANGE LIMIT", range_limit
 
         for lower_bound in xrange(skip_limit, range_limit, range_):
             
@@ -241,11 +248,14 @@ class CachedListFunctionDecorator(object):
         
         for ranged_key in ranged_keys_to_invalidate:
             self.cacher.delete(ranged_key)
+
+            #run all the invalidate hooks with the root cache key
+            self.cacher.trigger_hooks('invalidate', ranged_key)
         
-        key = self.build_cache_key(*args)
+        #key = self.build_cache_key(*args)
 
         #run all the invalidate hooks with the root cache key
-        self.cacher.trigger_hooks('invalidate', key)
+        #self.cacher.trigger_hooks('invalidate', key)
     
     def build_cache_key(self, *args):
         return self.cache_key_func(self.func, *args)
